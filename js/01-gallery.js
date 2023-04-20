@@ -25,27 +25,36 @@ galleryEl.addEventListener("click", onGalleryClick);
 
 function onGalleryClick(event) {
     event.preventDefault();
-    if (!event.target.classList.contains("gallery__image")) {
+
+    if (event.target.nodeName !== "IMG") {
         return;
     }
-    const galleryInstance = basicLightbox.create(`
+
+    const galleryInstance = basicLightbox.create(
+        `
     <img class="gallery__image"
     src="${event.target.dataset.source}" width="800" height="600" 
     alt="${event.target.alt}">
-    `);
+    `,
+        {
+            modifiedKeydown: null,
+            onShow(instance) {
+                this.modifiedKeydown = onKeydown.bind(instance);
+                document.addEventListener("keydown", this.modifiedKeydown);
+            },
+            onClose() {
+                document.removeEventListener("keydown", this.modifiedKeydown);
+            }
+        }
+    );
+
     // console.log(`Opening "${event.target.alt}" in lightbox`);
     galleryInstance.show();
+}
 
-    document.addEventListener("keydown", onKeydown);
-    function onKeydown(event) {
-        // console.log("Pressed:", event.code);
-        if (!galleryInstance.visible()) {
-            document.removeEventListener("keydown", onKeydown);
-        }
-        if (event.code === "Escape") {
-            galleryInstance.close();
-            document.removeEventListener("keydown", onKeydown);
-            return;
-        }
+function onKeydown(event) {
+    // console.log(event.code);
+    if (event.code === "Escape") {
+        this.close();
     }
 }
